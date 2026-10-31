@@ -8,8 +8,9 @@ options:
 packages:
   SwiftTerm:
     url: https://github.com/migueldeicaza/SwiftTerm
-    # 最新发布为 v1.99.2（SPM 识别为 1.99.2），尚无 2.x
-    from: "1.99.2"
+    # 固定到 1.16.0：1.19+ 引入了 SwiftTermBuildInfoPlugin 构建插件，
+    # 在云端 Xcode 26 下插件校验失败导致编译不过；1.16.0 核心 TerminalView API 完备且可干净编译。
+    exact: "1.16.0"
 
 targets:
   SSHClient:
