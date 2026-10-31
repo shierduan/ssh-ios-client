@@ -1,0 +1,58 @@
+name: iOS Build (macOS)
+
+# 云端 macOS 编译：无需本地 Mac，推送即触发。
+# 在 GitHub 的 macOS runner 上自动：
+#   xcodegen 生成工程 → pod install 拉取 NMSSH/libssh2 → 针对 iOS 模拟器免签名编译。
+# 完整构建日志会落盘并回写至 ci-log 分支（不在触发分支内，不会循环触发），
+# 可通过 contents API 读取，绕过 Actions 日志的 blob 重定向限制。
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build iOS Simulator
+    runs-on: macos-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+
+      - name: Build (xcodegen + cocoapods + xcodebuild)
+        run: |
+          bash scripts/ci.sh > build.log 2>&1
+          BUILD_RC=$?
+          cat build.log
+          exit $BUILD_RC
+
+      - name: Publish build log
+        if: always()
+        run: |
+          git config user.email "ci@github.com"
+          git config user.name "CI Bot"
+          git fetch origin ci-log || true
+          git checkout -B ci-log
+          cp build.log ci-build.log 2>/dev/null || echo "NO LOG CAPTURED" > ci-build.log
+          # 生成精简摘要（错误行 + 尾部），便于远程快速读取（完整日志较大，代理下易截断）
+          {
+            echo "===== ERROR / BUILD LINES ====="
+            grep -E "error:|BUILD FAILED|BUILD SUCCEEDED|fatal error|swift-driver|xcodebuild: error" ci-build.log | head -120 || true
+            echo
+            echo "===== UNDEFINED SYMBOLS / LINKER ====="
+            grep -E "undefined symbol|Undefined symbols|ld:|not 8-byte aligned|linker command" ci-build.log | head -40 || true
+            echo
+            echo "===== TAIL (last 80 lines) ====="
+            tail -80 ci-build.log
+          } > ci-summary.txt 2>&1
+          git add -f ci-build.log ci-summary.txt
+          git commit -m "ci: build log for run ${{ github.run_id }} (attempt ${{ github.run_attempt }})" || echo "nothing to commit"
+          git push origin ci-log --force
