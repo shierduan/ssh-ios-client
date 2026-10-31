@@ -1,0 +1,41 @@
+# ---- XcodeGen / CocoaPods / Xcode 生成产物（均在 CI 中重建，不入库）----
+*.xcodeproj
+*.xcodeproj/
+*.xcworkspace
+*.xcworkspace/
+Pods/
+DerivedData/
+.build/
+.swiftpm/
+
+# ---- Xcode 用户/本地设置 ----
+*.xccheckout
+*.moved-aside
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+xcuserdata/
+project.xcworkspace/xcuserdata/
+*.xcuserstate
+UserInterfaceState.xcuserstate
+
+# ---- 依赖缓存 ----
+Pods/
+Podfile.lock
+
+# ---- OS / 编辑器 ----
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+
+# ---- 密钥 / 私密文件（切勿入库）----
+*.p12
+*.pem
+*.key
+Secrets.xcconfig
+
+# ---- WorkBuddy 项目内部数据（含记忆，不入库）----
+.workbuddy/
