@@ -22,6 +22,9 @@ echo "==> 可用 schemes"
 xcodebuild -workspace SSHClient.xcworkspace -list
 
 echo "==> 针对 iOS 模拟器编译（免签名）"
+# 只构建 arm64（Apple Silicon active arch）：
+# NMSSH 2.3.1 内置的预编译 OpenSSL(libcrypto.a) 的 x86_64 切片含未 8 字节对齐的成员，
+# 现代 ld 会直接报 "not 8-byte aligned" 而链接失败；仅编 arm64 可绕开该坏切片。
 xcodebuild build \
   -workspace SSHClient.xcworkspace \
   -scheme SSHClient \
@@ -30,7 +33,7 @@ xcodebuild build \
   CODE_SIGNING_ALLOWED=NO \
   CODE_SIGN_IDENTITY="" \
   -destination 'generic/platform=iOS Simulator' \
-  ONLY_ACTIVE_ARCH=NO
+  ONLY_ACTIVE_ARCH=YES
 BUILD_STATUS=$?
 
 echo "==> BUILD EXIT CODE: $BUILD_STATUS"
