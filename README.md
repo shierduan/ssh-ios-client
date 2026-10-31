@@ -116,10 +116,23 @@ open SSHClient.xcworkspace
 `xcodegen 生成工程 → pod install 拉取 NMSSH/libssh2 → 针对 iOS 模拟器免签名编译`。
 本地无需 Xcode，把源码推上 GitHub 即触发云端 macOS 编译，编译日志就是验证结果。
 
-![iOS Build](https://github.com/<你的用户名>/<仓库名>/actions/workflows/ci.yml/badge.svg)
+![iOS Build](https://github.com/shierduan/ssh-ios-client/actions/workflows/ci.yml/badge.svg)
 
 > 注意：代码量较大且本地无法编译，首次云端编译很可能暴露若干 API/类型错误。
 > 这是预期内的「编译即验证」循环——把 CI 报错贴回，我会逐条修复后再次推送，直至绿灯。
+
+> **排查记录 / 环境限制 / 当前进度**：见 [`docs/BUILD_STATUS.md`](docs/BUILD_STATUS.md)。
+> 其中包含：CI 日志的获取方式（Actions Logs API 在本机不可用，日志经 `ci-log` 分支回读）、
+> 推送方式（git over https 被代理阻断，改用 `scripts/gh_push_api.py` 走 contents API），
+> 以及已定位并修复的各类依赖问题。
+
+### 传输层迁移中（NMSSH → Citadel）
+
+NMSSH 2.3.1 内置的**预编译 OpenSSL（2010 年代 libcrypto.a）**在现代 ld 下无法链接
+（`e_ubsec.o not 8-byte aligned`，x86_64 与 arm64 切片均受影响，arm64-only 也无效）。
+因此传输层正迁移到纯 Swift 的 [Citadel](https://github.com/orlandos-nl/Citadel)
+（构建于 swift-nio-ssh，无预编译二进制，自带 shell/PTY、SFTP、DirectTCPIP 转发）。
+迁移前后 `SSHClient` 协议保持不变，UI 与终端桥接层不受影响。
 
 ### 一键推送到云端触发构建
 ```bash
