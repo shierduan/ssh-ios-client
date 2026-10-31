@@ -8,7 +8,8 @@ options:
 packages:
   SwiftTerm:
     url: https://github.com/migueldeicaza/SwiftTerm
-    from: 2.0.0
+    # 最新发布为 v1.99.2（SPM 识别为 1.99.2），尚无 2.x
+    from: "1.99.2"
 
 targets:
   SSHClient:
