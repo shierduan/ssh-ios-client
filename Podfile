@@ -3,7 +3,8 @@ use_frameworks!
 
 target 'SSHClient' do
   # NMSSH 封装 libssh2,提供 SSH 会话/通道/SFTP/端口转发的成熟高层 API
-  pod 'NMSSH', '~> 2.4'
+  # 注意:NMSSH 最新发布为 2.3.1,没有 2.4.x,故使用 ~> 2.3
+  pod 'NMSSH', '~> 2.3'
 end
 
 post_install do |installer|
