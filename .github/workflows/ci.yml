@@ -42,6 +42,17 @@ jobs:
           git fetch origin ci-log || true
           git checkout -B ci-log
           cp build.log ci-build.log 2>/dev/null || echo "NO LOG CAPTURED" > ci-build.log
-          git add -f ci-build.log
+          # 生成精简摘要（错误行 + 尾部），便于远程快速读取（完整日志较大，代理下易截断）
+          {
+            echo "===== ERROR / BUILD LINES ====="
+            grep -E "error:|BUILD FAILED|BUILD SUCCEEDED|fatal error|swift-driver|xcodebuild: error" ci-build.log | head -120 || true
+            echo
+            echo "===== UNDEFINED SYMBOLS / LINKER ====="
+            grep -E "undefined symbol|Undefined symbols|ld:|not 8-byte aligned|linker command" ci-build.log | head -40 || true
+            echo
+            echo "===== TAIL (last 80 lines) ====="
+            tail -80 ci-build.log
+          } > ci-summary.txt 2>&1
+          git add -f ci-build.log ci-summary.txt
           git commit -m "ci: build log for run ${{ github.run_id }} (attempt ${{ github.run_attempt }})" || echo "nothing to commit"
           git push origin ci-log --force
