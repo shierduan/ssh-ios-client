@@ -1,15 +1,16 @@
 #!/usr/bin/env bash
 # 云端/本地统一的 iOS 编译脚本（macOS）。
 # 流程：xcodegen 生成工程 → pod install 拉取 NMSSH/libssh2 → 针对 iOS 模拟器免签名编译。
-# CI 工作流(.github/workflows/ci.yml) 直接调用本脚本，本地 Mac 也可 `bash scripts/ci.sh` 复现。
-set -euo pipefail
+# 全部输出会经工作流 tee 到 build.log，便于排查（首次编译很可能暴露 API/类型错误）。
+set -uo pipefail
 
-echo "==> Xcode / Swift 版本"
+echo "==> [$(date -u)] Xcode / Swift 版本"
 xcodebuild -version
-swift --version
+swift --version || true
 
-echo "==> 安装工具链 xcodegen + cocoapods (brew)"
-brew install xcodegen cocoapods
+echo "==> 确保工具链（缺则安装）"
+command -v xcodegen >/dev/null 2>&1 || brew install xcodegen
+command -v pod       >/dev/null 2>&1 || brew install cocoapods
 
 echo "==> XcodeGen 生成工程"
 xcodegen generate
@@ -30,3 +31,7 @@ xcodebuild build \
   CODE_SIGN_IDENTITY="" \
   -destination 'generic/platform=iOS Simulator' \
   ONLY_ACTIVE_ARCH=NO
+BUILD_STATUS=$?
+
+echo "==> BUILD EXIT CODE: $BUILD_STATUS"
+exit $BUILD_STATUS
